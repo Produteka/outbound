@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualización de Embudo - Produteka Style</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Produteka-inspired purple/lavender palette */
+            --purple-900: #4c1d95;
+            --purple-800: #5b21b6;
+            --purple-700: #6d28d9;
+            --purple-600: #7c3aed;
+            --purple-500: #8b5cf6;
+            --purple-400: #a78bfa;
+            --purple-300: #c4b5fd;
+            --purple-200: #ddd6fe;
+            --purple-100: #ede9fe;
+            --purple-50: #f5f3ff;
+            
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-400: #9ca3af;
+            --neutral-500: #6b7280;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-800: #1f2937;
+            --neutral-900: #111827;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--neutral-50);
+            color: var(--neutral-800);
+        }
+        
+        .soft-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .funnel-section {
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .funnel-section:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .funnel-section .content {
+            position: relative;
+            z-index: 10;
+        }
+        
+        .funnel-section .bg-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+        
+        .funnel-tooltip {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--neutral-800);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 20;
+            white-space: nowrap;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateX(-50%) translateY(4px);
+        }
+        
+        .funnel-section:hover .funnel-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .conversion-bar {
+            height: 6px;
+            border-radius: 3px;
+            background-color: var(--neutral-200);
+            overflow: hidden;
+        }
+        
+        .conversion-progress {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease-in-out;
+        }
+        
+        .stat-card {
+            border-radius: 12px;
+            background: white;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+            margin-bottom: 12px;
+        }
+        
+        /* Subtle highlight effect */
+        @keyframes subtle-glow {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        
+        .subtle-glow {
+            animation: subtle-glow 3s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-12 max-w-4xl">
+        <div class="card soft-shadow p-8 mb-8">
+            <h1 class="text-3xl font-semibold text-neutral-800 mb-2">Análisis de Conversión</h1>
+            <p class="text-neutral-500 mb-10">Visualización del proceso de outbound marketing</p>
+            
+            <div class="relative mb-16">
+                <div id="funnelContainer" class="flex space-x-4 h-96">
+                    <!-- Funnel sections will be generated here -->
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="stat-card soft-shadow">
+                    <h3 class="text-lg font-medium text-neutral-600 mb-2">Tasa de Conversión Total</h3>
+                    <div class="flex items-end">
+                        <span id="totalConversionRate" class="text-4xl font-bold text-purple-600">0%</span>
+                        <span class="text-neutral-500 ml-2 mb-1">de mensajes a llamadas</span>
+                    </div>
+                    <div class="mt-4 conversion-bar">
+                        <div id="totalConversionBar" class="conversion-progress bg-purple-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="stat-card soft-shadow">
+                    <h3 class="text-lg font-medium text-neutral-600 mb-2">Eficiencia por Etapa</h3>
+                    <div class="space-y-3">
+                        <div id="stageEfficiency" class="space-y-3">
+                            <!-- Stage efficiency will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card soft-shadow p-8">
+            <h2 class="text-2xl font-semibold text-neutral-800 mb-6">Detalles de Conversión</h2>
+            <div id="conversionDetails" class="space-y-6">
+                <!-- Conversion details will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const funnelData = [
+                { 
+                    name: "Mensajes enviados", 
+                    value: 228, 
+                    color: "#4c1d95", // Purple-900
+                    gradient: "linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%)",
+                    textColor: "white",
+                    icon: "📤" 
+                },
+                { 
+                    name: "Respuestas al primer mensaje", 
+                    value: 105, 
+                    color: "#6d28d9", // Purple-700
+                    gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+                    textColor: "white",
+                    icon: "💬" 
+                },
+                { 
+                    name: "Reply al mensaje pitch", 
+                    value: 42, 
+                    color: "#8b5cf6", // Purple-500
+                    gradient: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)",
+                    textColor: "white",
+                    icon: "🎯" 
+                },
+                { 
+                    name: "Llamadas agendadas", 
+                    value: 6, 
+                    color: "#a78bfa", // Purple-400
+                    gradient: "linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%)",
+                    textColor: "white",
+                    icon: "📅" 
+                }
+            ];
+            
+            const funnelContainer = document.getElementById('funnelContainer');
+            const conversionDetails = document.getElementById('conversionDetails');
+            const stageEfficiency = document.getElementById('stageEfficiency');
+            const totalConversionRate = document.getElementById('totalConversionRate');
+            const totalConversionBar = document.getElementById('totalConversionBar');
+            
+            function renderFunnel() {
+                funnelContainer.innerHTML = '';
+                conversionDetails.innerHTML = '';
+                stageEfficiency.innerHTML = '';
+                
+                const maxHeight = 100;
+                const minHeight = 30; // Increased minimum height for better readability
+                const heightStep = (maxHeight - minHeight) / (funnelData.length - 1);
+                
+                funnelData.forEach((item, index) => {
+                    const height = maxHeight - (index * heightStep);
+                    const section = document.createElement('div');
+                    section.className = `funnel-section flex items-center justify-center text-${item.textColor} relative`;
+                    section.style.height = `${height}%`;
+                    section.style.width = `${100 / funnelData.length}%`;
+                    
+                    section.innerHTML = `
+                        <div class="bg-gradient" style="background: ${item.gradient}"></div>
+                        <div class="content text-center p-4">
+                            <div class="icon-wrapper subtle-glow">
+                                <span class="text-2xl">${item.icon}</span>
+                            </div>
+                            <div class="font-medium text-sm mb-2">${item.name}</div>
+                            <div class="text-2xl font-bold">${item.value}</div>
+                        </div>
+                        <div class="funnel-tooltip">
+                            ${index > 0 ? `Conversión: ${((item.value / funnelData[index-1].value) * 100).toFixed(1)}%` : 'Inicio del proceso'}
+                        </div>
+                    `;
+                    
+                    funnelContainer.appendChild(section);
+                    
+                    // Add stage efficiency
+                    if (index > 0) {
+                        const conversionRate = (item.value / funnelData[index-1].value) * 100;
+                        const efficiencyItem = document.createElement('div');
+                        
+                        efficiencyItem.innerHTML = `
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-600">${funnelData[index-1].name.split(' ').slice(-1)} → ${item.name.split(' ').slice(-1)}</span>
+                                <span class="font-medium" style="color: ${item.color}">${conversionRate.toFixed(1)}%</span>
+                            </div>
+                            <div class="conversion-bar">
+                                <div class="conversion-progress" 
+                                    style="width: ${Math.min(conversionRate, 100)}%; background-color: ${item.color}"></div>
+                            </div>
+                        `;
+                        
+                        stageEfficiency.appendChild(efficiencyItem);
+                    }
+                });
+                
+                // Add conversion details
+                for (let i = 1; i < funnelData.length; i++) {
+                    const conversionRate = (funnelData[i].value / funnelData[i-1].value) * 100;
+                    const detailItem = document.createElement('div');
+                    detailItem.className = 'bg-white p-6 rounded-xl border border-neutral-100 soft-shadow';
+                    
+                    detailItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center mr-3" 
+                                         style="background: ${funnelData[i-1].gradient}">
+                                        <span class="text-xl text-white">${funnelData[i-1].icon}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-neutral-800">${funnelData[i-1].name}</h4>
+                                        <p class="text-sm text-neutral-500">${funnelData[i-1].value} contactos</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neutral-400 mx-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center mr-3" 
+                                         style="background: ${funnelData[i].gradient}">
+                                        <span class="text-xl text-white">${funnelData[i].icon}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-neutral-800">${funnelData[i].name}</h4>
+                                        <p class="text-sm text-neutral-500">${funnelData[i].value} contactos</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-neutral-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-neutral-600">Tasa de conversión</span>
+                                <span class="font-semibold" style="color: ${funnelData[i].color}">${conversionRate.toFixed(1)}%</span>
+                            </div>
+                            <div class="conversion-bar">
+                                <div class="conversion-progress" 
+                                    style="width: ${Math.min(conversionRate, 100)}%; background: ${funnelData[i].gradient}"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    conversionDetails.appendChild(detailItem);
+                }
+                
+                // Update total conversion
+                const totalRate = (funnelData[funnelData.length - 1].value / funnelData[0].value) * 100;
+                totalConversionRate.textContent = `${totalRate.toFixed(1)}%`;
+                totalConversionRate.style.color = funnelData[0].color;
+                totalConversionBar.style.width = `${totalRate}%`;
+                totalConversionBar.style.background = funnelData[0].gradient;
+            }
+            
+            renderFunnel();
+            
+            // Animate bars on load
+            setTimeout(() => {
+                document.querySelectorAll('.conversion-progress').forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 300);
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'947918a767a1b5bb',t:'MTc0ODU1NDI2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
